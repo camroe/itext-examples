@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+}
+
+group 'com.cmr'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'lib'
+    }
+}
+
+dependencies {
+//    Every dependency corresponds with a jar in Java and with a DLL in C#.
+//    kernel and io: contain low-level functionality.
+//    layout: contains high-level functionality.
+//    forms: needed for all the AcroForm examples.
+//    pdfa: needed for PDF/A-specific functionality.
+//    pdftest: needed for the examples that are also a test.
+//
+//    In this tutorial, we won't use the following modules that are also available:
+//    barcodes: use this if you want to create bar codes.
+//    hyph: use this if you want text to be hyphenated.
+//    font-asian: use this is you need CJK functionality (Chinese / Japanese / Korean)
+//    sign: use this if you need support for digital signatures.
+
+    implementation "com.itextpdf:kernel:${itextVersion}"
+    implementation "com.itextpdf:io:${itextVersion}"
+    implementation "com.itextpdf:layout:${itextVersion}"
+    implementation "com.itextpdf:forms:${itextVersion}"
+    implementation "com.itextpdf:pdfa:${itextVersion}"
+    implementation "com.itextpdf:pdftest:${itextVersion}"
+//    implementation 'com.itextpdf:commons:${itextVersion}'
+
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+}
+
+test {
+    useJUnitPlatform()
+}

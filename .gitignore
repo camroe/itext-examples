@@ -1,0 +1,8 @@
+#Directories
+.idea
+.gradle
+build
+
+#Files
+hs_err_*.log
+.DS_STORE
