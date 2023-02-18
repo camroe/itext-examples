@@ -1,5 +1,6 @@
 package com.cmr.pdf;
 
+import com.cmr.domain.Item;
 import com.cmr.domain.PurchaseOrder;
 import com.cmr.system.Constants;
 import com.itextpdf.io.font.constants.StandardFonts;
@@ -21,7 +22,11 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.*;
+import com.itextpdf.layout.borders.DoubleBorder;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.Property;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
@@ -60,49 +65,26 @@ public class PurchaseOrderPDF {
         //TODO: Do I need this event handler anymore?
         pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new MyEventHandler());
         Document doc = new Document(pdfDoc, PageSize.LETTER);
-
+        System.out.println("Left Margin: " + doc.getLeftMargin());
+        System.out.println("Right Margin: " + doc.getRightMargin());
+        System.out.println("Top Margin: " + doc.getTopMargin());
+        System.out.println("Bottom Margin: " + doc.getBottomMargin());
         //Header
-        float[] columnWidths = {2, 5, 5};
+        float[] columnWidths = {2, 20, 4, 4, 4};
         Table table = new Table(UnitValue.createPercentArray(columnWidths));
         table.useAllAvailableWidth();
 
-        //TODO: The following call is debug info - remove when done.
-        displayColumnWidthsOf(table);
-        Table testTable = new Table(UnitValue.createPointArray(columnWidths));
-        displayColumnWidthsOf(testTable);
-
-        Image logoImage = new Image(ImageDataFactory.create(Constants.HEADER_LOGO)).setAutoScale(true)
-                .setAutoScaleHeight(true)
-                .setAutoScaleWidth(true);
-        Cell logoCell = new Cell().add(logoImage);
-        table.addHeaderCell(logoCell);
-        com.itextpdf.layout.element.Text text = new Text("Purchase Order: " + purchaseOrder.getPoNumber())
-                .setTextRise(2.0f)
-                .setFontSize(13)
-                .setFontColor(ColorConstants.BLACK)
-                .setBackgroundColor(ColorConstants.WHITE)
-                .setTextAlignment(TextAlignment.LEFT);
-        com.itextpdf.layout.element.Text text2 = new Text("Purchase Order: " + purchaseOrder.getPoNumber())
-                .setTextRise(2.0f)
-                .setFontSize(13)
-                .setFontColor(ColorConstants.BLACK)
-                .setBackgroundColor(ColorConstants.WHITE)
-                .setTextAlignment(TextAlignment.RIGHT);
-
-        Cell cell = new Cell(1, 2)
-                .add(new Paragraph(text).add(text2));
-
-        table.addHeaderCell(cell);
-        doc.add(table);
         doc.add(new Paragraph("Insert Data Fields Here"));
         table = new Table(UnitValue.createPercentArray(columnWidths));
         table.useAllAvailableWidth();
 
         for (int i = 0; i < 2; i++) {
             Cell[] headerFooter = new Cell[]{
-                    cellHeaderFactory("Item #\nSKU\nPart #"),
+                    cellHeaderFactory("Quantity"),
                     cellHeaderFactory("Description"),
-                    cellHeaderFactory("QTY")
+                    cellHeaderFactory("Price"),
+                    cellHeaderFactory("Unit"),
+                    cellHeaderFactory("Extended")
             };
 
             for (Cell hfCell : headerFooter) {
@@ -115,25 +97,48 @@ public class PurchaseOrderPDF {
         }
 
 
-        for (int counter = 0; counter < 100; counter++) {
-            if (counter == 0) {
-                tableDataFactory(table, String.valueOf((counter + 1)));
-                tableDataFactory(table, "Description - This is a very long description and  This is a very long description and  This is a very long description and  This is a very long description and  This is a very long description and  This is a very long description and  This is a very long description and  This is a very long description and  " + (counter + 1));
-                tableDataFactory(table, "Quantity" + (counter + 1));
-            } else {
-                tableDataFactory(table, String.valueOf((counter + 1)));
-                tableDataFactory(table, "Description  " + (counter + 1));
-                tableDataFactory(table, "Quantity" + (counter + 1));
-            }
+        for (Item item :
+                purchaseOrder.getItems()) {
+            tableDataFactory(table, String.valueOf(item.getQuantity()));
+            tableDataFactory(table, item.getDescription());
+            tableDataFactory(table, String.format("$%,.2f", item.getPrice()), true);
+            tableDataFactory(table, item.getUnit(), true);
+            tableDataFactory(table, String.format("$%,.2f", item.getPrice() * item.getQuantity()), true);
+
         }
         doc.add(table);
+        doc.add(new Paragraph(calculateTotal(purchaseOrder))
+                .setBorderBottom(new DoubleBorder(1))
+                .setBold()
+                .setFontSize(Constants.PO_TABLE_TOTAL_FONT_SIZE)
+                .setTextAlignment(TextAlignment.RIGHT));
+
         doc.close();
-        addPageNumbersXofY(workingFileStr, finalFileStr);
+        addPageNumbersXofY(workingFileStr, finalFileStr, purchaseOrder);
+    }
+
+    private String calculateTotal(PurchaseOrder purchaseOrder) {
+        Double total = 0d;
+        for (Item item :
+                purchaseOrder.getItems()) {
+            total = total + (item.getPrice() * item.getQuantity());
+        }
+
+        return String.format("Total Purchase Order:   $%,.2f", total);
+    }
+
+    private Table tableDataFactory(Table table, String s, boolean right) {
+        if (right)
+            return table.addCell(new Cell().setTextAlignment(TextAlignment.RIGHT)
+                    .setFontSize(Constants.TABLE_ITEM_FONT_SIZE)
+                    .add(new Paragraph(s)));
+        else
+            return tableDataFactory(table, s);
     }
 
     private Table tableDataFactory(Table table, String s) {
         return table.addCell(new Cell().setTextAlignment(TextAlignment.LEFT)
-                .setFontSize(10)
+                .setFontSize(Constants.TABLE_ITEM_FONT_SIZE)
                 .add(new Paragraph(s)));
     }
 
@@ -156,24 +161,23 @@ public class PurchaseOrderPDF {
             PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
             PdfDocument pdfDoc = docEvent.getDocument();
             PdfPage page = docEvent.getPage();
-            int pageNumber = pdfDoc.getPageNumber(page);
             Rectangle pageSize = page.getPageSize();
             PdfCanvas pdfCanvas = new PdfCanvas(page.newContentStreamBefore(), page.getResources(), pdfDoc);
-            int lineX=45;
 
             pdfCanvas
                     .setStrokeColor(ColorConstants.BLACK)
-                    .moveTo(page.getPageSize().getLeft(),page.getPageSize().getHeight()-35)
-                    .lineTo(page.getPageSize().getRight(),page.getPageSize().getHeight()-35)
+                    .moveTo(pageSize.getLeft(), pageSize.getHeight() - 35)
+                    .lineTo(pageSize.getRight(), pageSize.getHeight() - 35)
                     .closePathStroke();
-            System.out.println("Letter Page Size is : X ::" + page.getPageSize().getX() + ", Y ::" + page.getPageSize().getY());
+            System.out.println("Page Size is : X(RIGHT) ::" + pageSize.getRight() + ", Y(TOP) ::" + pageSize.getTop());
+            System.out.println("Page Size is : X(WIDTH) ::" + pageSize.getWidth() + ", Y(HEIGHT) ::" + pageSize.getHeight());
 
             //Add watermark
             Canvas canvas = new Canvas(pdfCanvas, page.getPageSize());
             canvas.setFontColor(ColorConstants.LIGHT_GRAY);
             canvas.setProperty(Property.FONT_SIZE, UnitValue.createPointValue(120));
             canvas.setProperty(Property.FONT, informationFont);
-            canvas.showTextAligned(new Paragraph("Draft"), 298, 421, pdfDoc.getPageNumber(page),
+            canvas.showTextAligned(new Paragraph("Draft"), pageSize.getRight() / 2, pageSize.getTop() / 2, pdfDoc.getPageNumber(page),
                     TextAlignment.CENTER, VerticalAlignment.MIDDLE, 45);
 
             pdfCanvas.release();
@@ -187,21 +191,21 @@ public class PurchaseOrderPDF {
         System.out.println("Image Scaled Width:: " + headerLogoImage.getImageScaledWidth());
     }
 
-    protected void addPageNumbersXofY(String src, String dest) throws IOException {
+    protected void addPageNumbersXofY(String src, String dest, PurchaseOrder purchaseOrder) throws IOException {
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
         Document doc = new Document(pdfDoc);
         ImageData logoImageData = ImageDataFactory.create(Constants.HEADER_LOGO);
         Image headerLogoImage = new Image(logoImageData);
-        headerLogoImage.scaleToFit(65,65);
+        headerLogoImage.scaleToFit(Constants.LOGO_SCALE_TO_FIT_WIDTH, Constants.LOGO_SCALE_TO_FIT_HEIGHT);
         logImageData(headerLogoImage);
 
         int numberOfPages = pdfDoc.getNumberOfPages();
         for (int i = 1; i <= numberOfPages; i++) {
 
             // Write aligned text to the specified by parameters point
-            doc.showTextAligned(new Paragraph(String.format("PO [%s] - page %s of %s", "23sdfdsfasdfdsf412", i, numberOfPages)),
-                    306, 25, i, TextAlignment.CENTER, VerticalAlignment.TOP, 0);
-            headerLogoImage.setFixedPosition(i,45,pdfDoc.getPage(i).getPageSize().getHeight()-35);
+            doc.showTextAligned(new Paragraph(String.format("PO [%s] - page %s of %s", purchaseOrder.getPoNumber(), i, numberOfPages)),
+                    pdfDoc.getPage(i).getPageSize().getWidth() / 2, Constants.FOOTER_HEIGHT_FROM_BOTTOM, i, TextAlignment.CENTER, VerticalAlignment.TOP, 0);
+            headerLogoImage.setFixedPosition(i, 45, pdfDoc.getPage(i).getPageSize().getHeight() - 35);
             doc.add(headerLogoImage);
         }
 

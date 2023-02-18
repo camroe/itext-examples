@@ -1,8 +1,10 @@
 package com.cmr.factory;
 
+import com.cmr.domain.Item;
 import com.cmr.domain.PurchaseOrder;
-import lombok.Builder;
+import com.cmr.support.Utils;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class PurchaseOrderFactory {
@@ -18,7 +20,75 @@ public class PurchaseOrderFactory {
     return (PurchaseOrder.builder()
             .poNumber(poNumber)
             .poDate(new Date(System.currentTimeMillis()))
+            .items(createListOfItems(Utils.rnd1To(20)))
             .build());
+    
+    }
+    public static PurchaseOrder createTestPO(String poNumber, int numberOfItems) {
+        return (PurchaseOrder.builder()
+                .poNumber(poNumber)
+                .poDate(new Date(System.currentTimeMillis()))
+                .items(createListOfItems(numberOfItems))
+                .build());
 
+    }
+    private static ArrayList<Item> createListOfItems(int numberOfItemToOrder) {
+        ArrayList<Item> itemArrayList = new ArrayList<>();
+        for (int i = 0; i < numberOfItemToOrder; i++) {
+            Item item = buildRandomItem();
+            itemArrayList.add(item);
+        }
+        return itemArrayList;
+    }
+
+    private static  Item buildRandomItem() {
+        Item returnItem;
+        int answer = Utils.rnd1To(4);
+
+        switch (answer) {
+            case 1:
+                returnItem = Item.builder()
+                        .description("This is a description of an Item. Garmin 430WAAS ")
+                        .price(3400.00)
+                        .quantity(1)
+                        .unit("Each")
+                        .build();
+                break;
+            case 2:
+                returnItem = Item.builder()
+                        .description("3/4 inch # 8 SS Screws.  ")
+                        .price(24.00)
+                        .quantity(Utils.rnd1To(8))
+                        .unit("25 lot")
+                        .build();
+                break;
+            case 3:
+                returnItem = Item.builder()
+                        .description("#12 AWG heat shielded wire    ")
+                        .price(57.23)
+                        .quantity(Utils.rnd1To(5))
+                        .unit("50' spool")
+                        .build();
+                break;
+            case 4:
+                returnItem = Item.builder()
+                        .description("Rebuild kit for KTS 74 - logic board   ")
+                        .price(345.87)
+                        .quantity(Utils.rnd1To(2))
+                        .unit("Each")
+                        .build();
+                break;
+            default:
+                returnItem = Item.builder()
+                        .description("This is a description of an Item. Garmin 430WAAS ")
+                        .price(3400.00)
+                        .quantity(Utils.rnd1To(5))
+                        .unit("Each")
+                        .build();
+                break;
+
+
+        }
+        return returnItem;
     }
 }
