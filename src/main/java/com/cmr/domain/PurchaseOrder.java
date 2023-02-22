@@ -10,7 +10,8 @@ import java.util.Date;
 @Builder
 public class PurchaseOrder {
     private String poNumber;
+    private Vendor vendor;
+    private ShipTo shipTo;
     private Date poDate;
     private ArrayList<Item> items;
-
-}
+    }

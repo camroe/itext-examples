@@ -29,6 +29,8 @@ public class PurchaseOrderFactory {
                 .poNumber(poNumber)
                 .poDate(new Date(System.currentTimeMillis()))
                 .items(createListOfItems(numberOfItems))
+                .shipTo(ShipToFactory.createTestShipTo())
+                .vendor(VendorFactory.createTestVendor())
                 .build());
 
     }

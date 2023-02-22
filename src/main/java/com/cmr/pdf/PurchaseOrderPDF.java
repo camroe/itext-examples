@@ -4,7 +4,6 @@ import com.cmr.domain.Item;
 import com.cmr.domain.PurchaseOrder;
 import com.cmr.support.Utils;
 import com.cmr.system.Constants;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -52,7 +51,7 @@ public class PurchaseOrderPDF {
     }
 
     public void manipulatePdf(PurchaseOrder purchaseOrder) throws Exception {
-        logger.traceEntry(Utils.prettyJson(purchaseOrder));
+        logger.debug(Utils.prettyJson(purchaseOrder));
         //Build the tmp & final  file locations
         String workingFileStr = Constants.TMP_DIR + "tmpPO" + purchaseOrder.getPoNumber() + Constants.PDF_FILE_EXTENSION;
         File tmpFile = new File(workingFileStr);
@@ -68,16 +67,16 @@ public class PurchaseOrderPDF {
         //TODO: Do I need this event handler anymore?
         pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, new MyEventHandler());
         Document doc = new Document(pdfDoc, PageSize.LETTER);
-        System.out.println("Left Margin: " + doc.getLeftMargin());
-        System.out.println("Right Margin: " + doc.getRightMargin());
-        System.out.println("Top Margin: " + doc.getTopMargin());
-        System.out.println("Bottom Margin: " + doc.getBottomMargin());
+        logger.trace("Left Margin: " + doc.getLeftMargin());
+        logger.trace("Right Margin: " + doc.getRightMargin());
+        logger.trace("Top Margin: " + doc.getTopMargin());
+        logger.trace("Bottom Margin: " + doc.getBottomMargin());
         //Header
         float[] columnWidths = {2, 20, 4, 4, 4};
         Table table = new Table(UnitValue.createPercentArray(columnWidths));
         table.useAllAvailableWidth();
 
-        doc.add(new Paragraph("Insert Data Fields Here"));
+        vendorShipToLines(doc);
         table = new Table(UnitValue.createPercentArray(columnWidths));
         table.useAllAvailableWidth();
 
@@ -120,6 +119,10 @@ public class PurchaseOrderPDF {
         addPageNumbersXofY(workingFileStr, finalFileStr, purchaseOrder);
     }
 
+    private void vendorShipToLines(Document doc) {
+        doc.add(new Paragraph("Insert Data Fields Here"));
+    }
+
     private String calculateTotal(PurchaseOrder purchaseOrder) {
         Double total = 0d;
         for (Item item :
@@ -149,12 +152,17 @@ public class PurchaseOrderPDF {
         return new Cell().setBackgroundColor(new DeviceGray(0.75f)).add(new Paragraph(s)).setTextAlignment(TextAlignment.CENTER);
     }
 
-    private void displayColumnWidthsOf(Table table) {
-        for (int i = 0; i < table.getNumberOfColumns(); i++)
-            System.out.println("Column "
+    private String displayColumnWidthsOf(Table table) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < table.getNumberOfColumns(); i++) {
+            sb.append("Column "
                     + i
                     + ": "
                     + table.getColumnWidth(i));
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     protected class MyEventHandler implements IEventHandler {
@@ -172,8 +180,8 @@ public class PurchaseOrderPDF {
                     .moveTo(pageSize.getLeft(), pageSize.getHeight() - 35)
                     .lineTo(pageSize.getRight(), pageSize.getHeight() - 35)
                     .closePathStroke();
-            System.out.println("Page Size is : X(RIGHT) ::" + pageSize.getRight() + ", Y(TOP) ::" + pageSize.getTop());
-            System.out.println("Page Size is : X(WIDTH) ::" + pageSize.getWidth() + ", Y(HEIGHT) ::" + pageSize.getHeight());
+            logger.trace("Page Size is : X(RIGHT) ::" + pageSize.getRight() + ", Y(TOP) ::" + pageSize.getTop());
+            logger.trace("Page Size is : X(WIDTH) ::" + pageSize.getWidth() + ", Y(HEIGHT) ::" + pageSize.getHeight());
 
             //Add watermark
             Canvas canvas = new Canvas(pdfCanvas, page.getPageSize());
@@ -188,10 +196,10 @@ public class PurchaseOrderPDF {
     }
 
     private void logImageData(Image headerLogoImage) {
-        System.out.println("Image Height: " + headerLogoImage.getImageHeight());
-        System.out.println("Image Scaled Height:: " + headerLogoImage.getImageScaledHeight());
-        System.out.println("Image Width: " + headerLogoImage.getImageWidth());
-        System.out.println("Image Scaled Width:: " + headerLogoImage.getImageScaledWidth());
+        logger.trace("Image Height: " + headerLogoImage.getImageHeight());
+        logger.trace("Image Scaled Height:: " + headerLogoImage.getImageScaledHeight());
+        logger.trace("Image Width: " + headerLogoImage.getImageWidth());
+        logger.trace("Image Scaled Width:: " + headerLogoImage.getImageScaledWidth());
     }
 
     protected void addPageNumbersXofY(String src, String dest, PurchaseOrder purchaseOrder) throws IOException {
@@ -205,11 +213,27 @@ public class PurchaseOrderPDF {
         int numberOfPages = pdfDoc.getNumberOfPages();
         for (int i = 1; i <= numberOfPages; i++) {
 
-            // Write aligned text to the specified by parameters point
-            doc.showTextAligned(new Paragraph(String.format("PO [%s] - page %s of %s", purchaseOrder.getPoNumber(), i, numberOfPages)),
-                    pdfDoc.getPage(i).getPageSize().getWidth() / 2, Constants.FOOTER_HEIGHT_FROM_BOTTOM, i, TextAlignment.CENTER, VerticalAlignment.TOP, 0);
+            //put footer on each page
+            doc.showTextAligned(new Paragraph(String.format("PO [%s] - page %s of %s", purchaseOrder.getPoNumber(), i, numberOfPages)).setFontSize(Constants.FOOTER_FONT_SIZE),
+                            pdfDoc.getPage(i).getPageSize().getWidth() / 2,
+                            Constants.FOOTER_HEIGHT_FROM_BOTTOM,
+                            i,
+                            TextAlignment.CENTER,
+                            VerticalAlignment.TOP,
+                            0)
+
+            ;
+            //put header on each page - including PO number
             headerLogoImage.setFixedPosition(i, 45, pdfDoc.getPage(i).getPageSize().getHeight() - 35);
             doc.add(headerLogoImage);
+            doc.showTextAligned(new Paragraph(String.format("Purchase Order  %s", purchaseOrder.getPoNumber())).setFontSize(Constants.PO_TITLE_FONT_SIZE),
+                    pdfDoc.getPage(i).getPageSize().getWidth() / 2,
+                    pdfDoc.getPage(i).getPageSize().getHeight() - 5,
+                    i,
+                    TextAlignment.CENTER,
+                    VerticalAlignment.TOP,
+                    0).setFontSize(Constants.PO_TITLE_FONT_SIZE);
+
         }
 
         doc.close();

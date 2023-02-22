@@ -10,6 +10,7 @@ public class Constants {
     public static final int LOGO_SCALE_TO_FIT_HEIGHT=65;
     public static final int TABLE_ITEM_FONT_SIZE=10;
     public static final int PO_TABLE_TOTAL_FONT_SIZE=TABLE_ITEM_FONT_SIZE+2;
+    public static final int PO_TITLE_FONT_SIZE=TABLE_ITEM_FONT_SIZE+4;
     public static final int NUMBER_OF_TEST_ITEMS_TO_PRODUCE=50;
-
+    public static final float FOOTER_FONT_SIZE = TABLE_ITEM_FONT_SIZE-2;
 }
