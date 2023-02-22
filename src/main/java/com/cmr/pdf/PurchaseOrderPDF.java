@@ -2,7 +2,9 @@ package com.cmr.pdf;
 
 import com.cmr.domain.Item;
 import com.cmr.domain.PurchaseOrder;
+import com.cmr.support.Utils;
 import com.cmr.system.Constants;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -32,13 +34,15 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
 import lombok.SneakyThrows;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 
 
 public class PurchaseOrderPDF {
-
+    private static final Logger logger = LogManager.getLogger(PurchaseOrderPDF.class.getName());
     PdfFont titleFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
     PdfFont headerFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
     PdfFont cellFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
@@ -48,8 +52,7 @@ public class PurchaseOrderPDF {
     }
 
     public void manipulatePdf(PurchaseOrder purchaseOrder) throws Exception {
-
-
+        logger.traceEntry(Utils.prettyJson(purchaseOrder));
         //Build the tmp & final  file locations
         String workingFileStr = Constants.TMP_DIR + "tmpPO" + purchaseOrder.getPoNumber() + Constants.PDF_FILE_EXTENSION;
         File tmpFile = new File(workingFileStr);
