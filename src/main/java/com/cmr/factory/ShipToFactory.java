@@ -20,7 +20,7 @@ public class ShipToFactory {
     public static ShipTo createTestShipTo() {
         return ShipTo.builder()
                 .name("Test ShipTo")
-                .address("123 Test Street")
+                .address("123  Very Long Big Ass Stupid Test Street That could cause weirdness")
                 .city("Test City")
                 .state("Test State")
                 .zip("12345")

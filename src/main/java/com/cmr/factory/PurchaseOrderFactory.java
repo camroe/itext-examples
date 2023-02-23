@@ -50,7 +50,7 @@ public class PurchaseOrderFactory {
         switch (answer) {
             case 1:
                 returnItem = Item.builder()
-                        .description("This is a description of an Item. Garmin 430WAAS ")
+                        .description("This is a description of an Item. Garmin 430WAAS. I am going to make this description really long, just to see what will happen ")
                         .price(3400.00)
                         .quantity(1)
                         .unit("Each")

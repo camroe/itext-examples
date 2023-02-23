@@ -13,4 +13,5 @@ public class Constants {
     public static final int PO_TITLE_FONT_SIZE=TABLE_ITEM_FONT_SIZE+4;
     public static final int NUMBER_OF_TEST_ITEMS_TO_PRODUCE=50;
     public static final float FOOTER_FONT_SIZE = TABLE_ITEM_FONT_SIZE-2;
+    public static final float LABEL_FONT_SIZE = TABLE_ITEM_FONT_SIZE;
 }
