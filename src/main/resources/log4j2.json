@@ -4,15 +4,30 @@
     "name": "Repair Station",
     "packages": "com.cmr",
     "ThresholdFilter": {
-      "level": "trace"
+      "level": "debug"
     },
+    //https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
     "appenders": {
-      "Console": {
-        "name": "STDOUT",
-        "PatternLayout": {
-          "pattern": "%d [%t] %-5p %c - %m%n"
+      "Console": [
+        {
+          "name": "STDOUT",
+          "PatternLayout": {
+            "pattern": "%d [%t] %-5p %c - %m%n"
+          }
+        },
+        {
+          "name": "SPECIAL",
+          "PatternLayout": {
+            "pattern": "\u001B[4;35m %d [%t] %-5p %c - %m\u001B[0m %n"
+          }
+        },
+        {
+          "name": "HIGHLIGHT",
+          "PatternLayout": {
+            "pattern": "%highlight{ %d [%t] %-5p %c - %m%n}"
+          }
         }
-      }
+      ]
     },
     "loggers": {
       "root": {
@@ -20,7 +35,30 @@
         "AppenderRef": {
           "ref": "STDOUT"
         }
-      }
+      },
+      "logger": [
+        {
+          "name": "com.cmr",
+          "level": "trace",
+          "additivity": false,
+          "appender-ref": [
+            {
+              "ref": "HIGHLIGHT"
+            }
+          ]
+        },
+        {
+          "name": "com.itextpdf.layout.renderer",
+          "level": "warn",
+          "additivity": false,
+          "appender-ref": [
+            {
+              "ref": "HIGHLIGHT"
+            }
+          ]
+        }
+      ]
     }
   }
 }
+
